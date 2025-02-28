@@ -1,0 +1,44 @@
+name: Update GitOps Image Tag
+
+on:
+  workflow_call:
+    inputs:
+      gitops-repo:
+        description: "Path to the GitOps repo"
+        required: true
+        type: string
+      gitops-branch:
+        description: "Branch to update"
+        required: true
+        type: string
+      gitops-path:
+        description: "Path to the deployment files"
+        required: true
+        type: string
+      new-tag:
+        description: "New image tag"
+        required: true
+        type: string
+
+jobs:
+  update-gitops-image-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.gitops-repo }}
+          ref: ${{ inputs.gitops-branch }}
+
+      - name: Update Kustomization Image Tag
+        working-directory: ${{ inputs.gitops-path }}
+        run: |
+          kustomize edit set image "APP_IMAGE=*:${{ inputs.new-tag }}"
+
+      - name: Commit and Push Changes
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add .
+          git commit -m "Update ${{ inputs.image-name }} tag to ${{ inputs.new-tag }}" || echo "No changes detected"
+          git push origin ${{ inputs.branch }}
