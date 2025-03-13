@@ -1,7 +1,16 @@
 name: Update GitOps Image Tag
 
+# This workflow is designed to be called from another repository
+# The calling workflow must provide GITOPS_PAT secret for accessing private repos
+# Example:
+#   secrets: inherit   # This passes all secrets from the caller to this workflow
+
 on:
   workflow_call:
+    secrets:
+      GITOPS_PAT:
+        description: "PAT with access to the GitOps repository"
+        required: true
     inputs:
       gitops-repo:
         description: "Path to the GitOps repo"
@@ -24,11 +33,28 @@ jobs:
   update-gitops-image-tag:
     runs-on: ubuntu-latest
     steps:
+      - name: Debug Environment
+        run: |
+          echo "Checking if GITOPS_PAT exists (will not print value):"
+          if [ -n "${{ secrets.GITOPS_PAT }}" ]; then
+            echo "✓ GITOPS_PAT is set"
+          else
+            echo "✗ GITOPS_PAT is not set"
+            echo "::error::The GITOPS_PAT secret is required but not available. Make sure it's defined in the calling repository and passed with 'secrets: inherit'"
+            exit 1
+          fi
+          echo "GitOps Repo: ${{ inputs.gitops-repo }}"
+          echo "GitOps Branch: ${{ inputs.gitops-branch }}"
+          echo "GitOps Path: ${{ inputs.gitops-path }}"
+
       - name: Checkout GitOps Repository
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.gitops-repo }}
           ref: ${{ inputs.gitops-branch }}
+          # GITOPS_PAT must be defined in the calling repo's secrets
+          # This token needs repo scope access to the private gitops repository
+          token: ${{ secrets.GITOPS_PAT }}
 
       - name: Update Kustomization Image Tag
         working-directory: ${{ inputs.gitops-path }}
@@ -40,5 +66,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add .
-          git commit -m "Update ${{ inputs.image-name }} tag to ${{ inputs.new-tag }}" || echo "No changes detected"
-          git push origin ${{ inputs.branch }}
+          git commit -m "Update image tag to ${{ inputs.new-tag }}" || echo "No changes detected"
+          git push origin ${{ inputs.gitops-branch }}

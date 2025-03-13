@@ -26,7 +26,7 @@ jobs:
       attestations: write
       id-token: write
     outputs:
-      image-full-name: ${{ steps.set-outputs.outputs.image-full-name }}
+      image-sha-tag: ${{ steps.set-outputs.outputs.image-sha-tag }}
     steps:
       - name: Check out source repository
         uses: actions/checkout@v4
