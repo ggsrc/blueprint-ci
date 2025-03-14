@@ -1,4 +1,5 @@
 name: Build & Push Docker
+description: "Build and push a Docker image to GitHub Container Registry"
 
 on:
   workflow_call:

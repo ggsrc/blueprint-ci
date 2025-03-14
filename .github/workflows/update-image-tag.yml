@@ -1,9 +1,5 @@
 name: Update GitOps Image Tag
-
-# This workflow is designed to be called from another repository
-# The calling workflow must provide GITOPS_PAT secret for accessing private repos
-# Example:
-#   secrets: inherit   # This passes all secrets from the caller to this workflow
+description: "Update the image tag in the GitOps repository"
 
 on:
   workflow_call:
@@ -63,8 +59,8 @@ jobs:
 
       - name: Commit and Push Changes
         run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
+          git config user.email "ggsrc-bot@users.noreply.github.com"
+          git config user.name "ggsrc-bot"
           git add .
-          git commit -m "Update image tag to ${{ inputs.new-tag }}" || echo "No changes detected"
+          git commit -m "ci(deploy): update ${{ inputs.gitops-path }} image tag to ${{ inputs.new-tag }}"
           git push origin ${{ inputs.gitops-branch }}
