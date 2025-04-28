@@ -1,5 +1,6 @@
+# Update the image tag in the GitOps repository
+
 name: Update GitOps Image Tag
-description: "Update the image tag in the GitOps repository"
 
 on:
   workflow_call:

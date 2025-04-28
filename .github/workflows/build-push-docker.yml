@@ -1,8 +1,13 @@
+# Build and push a Docker image to GitHub Container Registry
+
 name: Build & Push Docker
-description: "Build and push a Docker image to GitHub Container Registry"
 
 on:
   workflow_call:
+    secrets:
+      GITOPS_PAT:
+        description: "PAT with access to the GitOps repository"
+        required: true
     inputs:
       image-name:
         description: "Name of the Docker image (e.g., org/app)"
@@ -62,6 +67,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GITOPS_PAT=${{ secrets.GITOPS_PAT }}
 
       - name: Set outputs
         id: set-outputs
