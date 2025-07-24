@@ -25,6 +25,16 @@ on:
         description: "New image tag"
         required: true
         type: string
+      create-pr:
+        description: "If true, create a PR instead of pushing directly"
+        required: false
+        type: boolean
+        default: false
+      pr-body:
+        description: "Body of the PR"
+        required: false
+        type: string
+        default: "Automated PR to update image tag in ${{ inputs.gitops-path }} to ${{ inputs.new-tag }}"
 
 jobs:
   update-gitops-image-tag:
@@ -58,10 +68,22 @@ jobs:
         run: |
           kustomize edit set image "APP_IMAGE=*:${{ inputs.new-tag }}"
 
-      - name: Commit and Push Changes
+      - name: Commit and Push Changes (Direct)
+        if: ${{ inputs.create-pr != true }}
         run: |
           git config user.email "ggsrc-bot@users.noreply.github.com"
           git config user.name "ggsrc-bot"
           git add .
           git commit -m "ci(deploy): update ${{ inputs.gitops-path }} image tag to ${{ inputs.new-tag }}"
           git push origin ${{ inputs.gitops-branch }}
+
+      - name: Create Pull Request
+        if: ${{ inputs.create-pr == true }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITOPS_PAT }}
+          commit-message: "ci(deploy): update ${{ inputs.gitops-path }} image tag to ${{ inputs.new-tag }}"
+          branch: bot/ci-update-image-tag/${{ inputs.gitops-path }}
+          title: "ci(deploy): update ${{ inputs.gitops-path }} image tag to ${{ inputs.new-tag }}"
+          body: ${{ inputs.pr-body }}
+          committer: "ggsrc-bot <ggsrc-bot@users.noreply.github.com>"
